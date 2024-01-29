@@ -19,14 +19,14 @@ const Consumer = () => {
             key={index}
             className="bg-gray-300 p-2 rounded-md"
           >
-            {element.type === 'text' && <div>{element.props.text}</div>}
+            {element.type === 'text' && <div>{element.props.text || 'paparph'}</div>}
             {element.type === 'button' && (
               <button
                 onClick={() => {
                   alert(element.props.alert);
                 }}
               >
-                {element.props.text}
+                {element.props.text || 'Button'}
               </button>
             )}
           </div>

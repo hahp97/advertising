@@ -8,6 +8,8 @@ import { DragEvent, useEffect, useRef, useState } from 'react';
 
 const AdminPage = () => {
   const [elements, setElements] = useState<Element[]>([]);
+  const [history, setHistory] = useState<Element[]>([]);
+
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
 
   const [dragAndDrop, setDragAndDrop] = useState<ElementPosition>(initialPosition);
@@ -24,6 +26,7 @@ const AdminPage = () => {
     const newElement: Element = { type: elementType, id: new Date().getTime(), props: { text: '' } };
 
     setElements([...elements, newElement]);
+    setHistory([...history, newElement]);
   };
 
   const handleOnDragOver = (e: DragEvent) => {
@@ -110,10 +113,102 @@ const AdminPage = () => {
     window.open('/consumer', '_blank');
   };
 
+  const handleExport = () => {
+    const data = localStorage.getItem('data');
+    if (!data) {
+      return;
+    }
+
+    const dataView = JSON.parse(data);
+
+    const dataExport = dataView.map((element: Element) => {
+      if (element.type === 'text') {
+        return {
+          id: element.id,
+          type: element.type,
+          props: {
+            text: element.props.text,
+          },
+        };
+      }
+
+      if (element.type === 'button') {
+        return {
+          id: element.id,
+          type: element.type,
+          props: {
+            text: element.props.text,
+            alert: element.props.alert,
+          },
+        };
+      }
+    });
+
+    const dataExportString = JSON.stringify(dataExport);
+
+    const blob = new Blob([dataExportString], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.json';
+    a.click();
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+
+      const reader = new FileReader();
+      reader.readAsText(file, 'UTF-8');
+
+      reader.onload = (readerEvent) => {
+        const content = readerEvent.target?.result;
+        if (typeof content === 'string') {
+          const dataImport = JSON.parse(content);
+
+          const dataView = dataImport.map((element: Element) => {
+            if (element.type === 'text') {
+              return {
+                type: element.type,
+                id: element.id || new Date().getTime(),
+                props: {
+                  text: element.props.text,
+                },
+              };
+            }
+
+            if (element.type === 'button') {
+              return {
+                type: element.type,
+                id: element.id || new Date().getTime(),
+                props: {
+                  text: element.props.text,
+                  alert: element.props.alert,
+                },
+              };
+            }
+          });
+
+          setElements(dataView);
+        }
+      };
+    };
+
+    input.click();
+  };
+
+  const handleUndo = () => {
+    setHistory(history.slice(0, history.length - 1));
+
+    setElements(history.slice(0, history.length - 1));
+  };
+
   useEffect(() => {
-    console.log('selectedElement', selectedElement);
-    console.log('elements', elements);
-  }, [elements, selectedElement]);
+    console.log('history', history);
+  }, [history]);
 
   return (
     <div>
@@ -145,6 +240,9 @@ const AdminPage = () => {
           <div>
             <button onClick={handleSave}>Save</button>
             <button onClick={handleView}>View</button>
+            <button onClick={handleExport}>Export</button>
+            <button onClick={handleImport}>Import</button>
+            <button onClick={handleUndo}>Undo</button>
           </div>
           <section>
             <ul>
@@ -196,6 +294,10 @@ const AdminPage = () => {
                 id="text"
                 label="Add your text"
                 type="text"
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  setHistory((prev) => [...prev, { ...selectedElement, props: { text: value } }]);
+                }}
                 placeholder="Text"
                 onChange={(e) => {
                   const value = e.target.value;
@@ -217,6 +319,13 @@ const AdminPage = () => {
                 label="Add your message"
                 type="text"
                 placeholder="Text"
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  setHistory((prev) => [
+                    ...prev,
+                    { ...selectedElement, props: { ...selectedElement.props, alert: value } },
+                  ]);
+                }}
                 onChange={(e) => {
                   const value = e.target.value;
                   setElements((prev) => {

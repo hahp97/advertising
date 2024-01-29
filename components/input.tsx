@@ -11,12 +11,14 @@ interface InputProps {
   rules?: Partial<Record<string, any>>;
   placeholder?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Input: React.FC<InputProps> = ({ id, label, type = 'text', disabled, placeholder, onChange }) => {
+const Input: React.FC<InputProps> = ({ id, label, type = 'text', disabled, placeholder, onChange, onBlur }) => {
   return (
     <div className="w-full relative">
       <input
+        onBlur={onBlur}
         id={id}
         onChange={onChange}
         disabled={disabled}
