@@ -13,18 +13,21 @@ const Consumer = () => {
 
   return (
     <div>
-      <div className="flex">
+      <div className="flex flex-col gap-4 items-center pt-10">
         {dataView.map((element: Element, index: number) => (
           <div
             key={index}
-            className="bg-gray-300 p-2 rounded-md"
+            className="bg-gray-300 p-4 rounded-md shadow-md flex items-center justify-center"
           >
-            {element.type === 'text' && <div>{element.props.text || 'paparph'}</div>}
+            {element.type === 'text' && (
+              <div className="text-gray-700 text-sm">{element.props.text || 'Paragraph'}</div>
+            )}
             {element.type === 'button' && (
               <button
                 onClick={() => {
                   alert(element.props.alert);
                 }}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md"
               >
                 {element.props.text || 'Button'}
               </button>
