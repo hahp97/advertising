@@ -1,10 +1,13 @@
 'use client';
 
+import Button from '@/components/button';
 import Input from '@/components/input';
+import Label from '@/components/paragraph';
 import { initialPosition } from '@/constants/initialData';
+import useMouseXY from '@/hooks/useMouseXY';
 import { Element } from '@/types/element';
 import { ElementPosition } from '@/types/elementPosition';
-import { DragEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
 
 const AdminPage = () => {
   const [elements, setElements] = useState<Element[]>([]);
@@ -15,6 +18,9 @@ const AdminPage = () => {
   const [dragAndDrop, setDragAndDrop] = useState<ElementPosition>(initialPosition);
 
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
+
+  const myElementRef = useRef<HTMLElement>(null);
+  const mouseXY = useMouseXY(myElementRef);
 
   const handleOnDrag = (e: DragEvent, elementType: string) => {
     (e.dataTransfer as DataTransfer).setData('elementType', elementType);
@@ -79,31 +85,6 @@ const AdminPage = () => {
       draggedTo: null,
     });
   };
-
-  const updateMousePosition = (e: MouseEvent) => {
-    const rect = divRef.current?.getBoundingClientRect();
-
-    if (rect) {
-      // Kiểm tra nếu con trỏ chuột nằm trong ranh giới của div
-      const withinBoundsX = e.clientX >= rect.left && e.clientX <= rect.right;
-      const withinBoundsY = e.clientY >= rect.top && e.clientY <= rect.bottom;
-
-      if (withinBoundsX && withinBoundsY) {
-        setMousePosition({ x: e.clientX, y: e.clientY, dragging: mousePosition.dragging });
-      }
-    }
-  };
-
-  const divRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    window.addEventListener('mousemove', updateMousePosition);
-
-    // Cleanup listener on unmount
-    return () => {
-      window.removeEventListener('mousemove', updateMousePosition);
-    };
-  }, []);
 
   const handleSave = () => {
     localStorage.setItem('data', JSON.stringify(elements));
@@ -206,6 +187,20 @@ const AdminPage = () => {
     setElements(history.slice(0, history.length - 1));
   };
 
+  const handleConfigElement = (element: Element, e: ChangeEvent<HTMLInputElement>) => {
+    setSelectedElement(element);
+    const value = e.target.value;
+    setElements((prev) => {
+      const newElements = prev.map((item) => {
+        if (item.id === element.id) {
+          item.props.text = value;
+        }
+        return item;
+      });
+      return newElements;
+    });
+  };
+
   useEffect(() => {
     console.log('history', history);
   }, [history]);
@@ -232,17 +227,32 @@ const AdminPage = () => {
           </div>
         </div>
         <div
-          ref={divRef}
+          ref={myElementRef as RefObject<HTMLDivElement>}
           className="w-2/4 bg-gray-100 p-2 rounded-md"
           onDrop={handleOnDrop}
           onDragOver={handleOnDragOver}
         >
-          <div>
-            <button onClick={handleSave}>Save</button>
-            <button onClick={handleView}>View</button>
-            <button onClick={handleExport}>Export</button>
-            <button onClick={handleImport}>Import</button>
-            <button onClick={handleUndo}>Undo</button>
+          <div className="flex">
+            <Button
+              label="Save"
+              onClick={handleSave}
+            />
+            <Button
+              label="View"
+              onClick={handleView}
+            />
+            <Button
+              label="Export"
+              onClick={handleExport}
+            />
+            <Button
+              label="Import"
+              onClick={handleImport}
+            />
+            <Button
+              label="Undo"
+              onClick={handleUndo}
+            />
           </div>
           <section>
             <ul>
@@ -258,13 +268,10 @@ const AdminPage = () => {
                   className={'bg-gray-300 p-2 rounded-md'}
                 >
                   {element.type === 'text' && (
-                    <text
-                      onClick={() => {
-                        setSelectedElement(element);
-                      }}
-                    >
-                      {element.id} + {element.type}
-                    </text>
+                    <Label
+                      initialContent="Paragraph"
+                      onChange={(e) => handleConfigElement(element, e)}
+                    />
                   )}
                   {element.type === 'button' && (
                     <button
@@ -283,36 +290,12 @@ const AdminPage = () => {
         <div className="w-1/4">
           <div>
             <p>Mouse Position:</p>
-            <p>X: {mousePosition.x}</p>
-            <p>Y: {mousePosition.y}</p>
+            <p>X: {mouseXY.x}</p>
+            <p>Y: {mouseXY.y}</p>
             <p>Dragging: {mousePosition.dragging}</p>
             <p>Instances: {elements.length}</p>
           </div>
           <div>
-            {selectedElement && (
-              <Input
-                id="text"
-                label="Add your text"
-                type="text"
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  setHistory((prev) => [...prev, { ...selectedElement, props: { text: value } }]);
-                }}
-                placeholder="Text"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setElements((prev) => {
-                    const newElements = prev.map((element) => {
-                      if (element.id === selectedElement.id) {
-                        element.props.text = value;
-                      }
-                      return element;
-                    });
-                    return newElements;
-                  });
-                }}
-              />
-            )}
             {selectedElement?.type === 'button' && (
               <Input
                 id="button"
