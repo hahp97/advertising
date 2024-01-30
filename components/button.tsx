@@ -31,7 +31,9 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
       disabled={disabled}
       onClick={onClick}
-      className={'inline-flex items-center justify-center rounded-lg transition bg-white border-black text-black'}
+      className={
+        'bg-violet-500 hover:bg-violet-600 active:bg-violet-700 focus:outline-none focus:ring focus:ring-violet-300 rounded-lg text-white px-3 py-2 text-sm font-semibold'
+      }
     >
       <div className="px-3">{label}</div>
     </button>

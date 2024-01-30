@@ -207,7 +207,7 @@ const AdminPage = () => {
 
   return (
     <div>
-      <div className="flex">
+      <div className="flex h-[100vh]">
         <div className="w-1/4">
           <div className="bg-gray-200 p-2 rounded-md">
             <div
@@ -228,11 +228,11 @@ const AdminPage = () => {
         </div>
         <div
           ref={myElementRef as RefObject<HTMLDivElement>}
-          className="w-2/4 bg-gray-100 p-2 rounded-md"
+          className="w-2/4 bg-gray-100 p-2 rounded-md flex justify-center "
           onDrop={handleOnDrop}
           onDragOver={handleOnDragOver}
         >
-          <div className="flex">
+          <div className="flex items-center justify-center space-x-3 max-w-xl max-h-20 rounded-lg px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
               onClick={handleSave}
@@ -254,6 +254,7 @@ const AdminPage = () => {
               onClick={handleUndo}
             />
           </div>
+
           <section>
             <ul>
               {elements.map((element, index) => (
