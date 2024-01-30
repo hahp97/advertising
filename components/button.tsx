@@ -18,22 +18,26 @@ const Button: React.FC<ButtonProps> = ({
   width,
   ...props
 }) => {
-  //   const buttonClasses = classNames(
-  //     `inline-flex items-center justify-center rounded-lg transition ${fullWidth ? 'w-full' : width}`,
-  //     outline ? 'bg-white border-black text-black' : 'bg-rose-500 border-rose-500 text-white',
-  //     small ? 'text-sm py-1 font-light border-[1px]' : 'text-md py-3 font-semibold border-2',
-  //     disabled && 'opacity-50',
-  //     props.className
-  //   );
-
   return (
     <button
       {...props}
       disabled={disabled}
       onClick={onClick}
-      className={
-        'bg-violet-500 hover:bg-violet-600 active:bg-violet-700 focus:outline-none focus:ring focus:ring-violet-300 rounded-lg text-white px-3 py-2 text-sm font-semibold'
-      }
+      className={`
+        bg-violet-500 
+        hover:bg-violet-600 
+        active:bg-violet-700 
+        focus:outline-none 
+        focus:ring 
+        focus:ring-violet-300 
+        rounded-lg 
+        text-white 
+        px-3 
+        py-2 
+        text-sm 
+        font-semibold
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}  
+      `}
     >
       <div className="px-3">{label}</div>
     </button>

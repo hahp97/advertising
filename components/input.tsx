@@ -1,60 +1,49 @@
 'use client';
 
+import { ChangeEvent } from 'react';
+
 interface InputProps {
   id: string;
   label: string;
   type?: string;
-  disabled?: boolean;
-  formatPrice?: boolean;
-  required?: boolean;
-  pattern?: string;
-  rules?: Partial<Record<string, any>>;
   placeholder?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onBlur?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
 }
 
-const Input: React.FC<InputProps> = ({ id, label, type = 'text', disabled, placeholder, onChange, onBlur }) => {
+const Input = ({ id, label, type = 'text', value, placeholder, onChange, onBlur }: InputProps) => {
   return (
-    <div className="w-full relative">
-      <input
-        onBlur={onBlur}
-        id={id}
-        onChange={onChange}
-        disabled={disabled}
-        placeholder={placeholder ? placeholder : ' '}
-        type={type}
-        className={`
-          peer
-          w-full
-          h-auto
-          p-4
-          pt-6
-          input
-          disabled:opacity-70
-          disabled:cursor-not-allowed
-         
-        `}
-      />
+    <div className="relative w-full">
       <label
         htmlFor={id}
-        className={`
-          absolute
-          text-md
-          duration-100
+        className="
+          text-gray-500
+          transition-all
           transform
-          -translate-y-3
-          top-5
-          z-100
-          origin-[0]
-          peer-placeholder-shown:scale-100
-          peer-placeholder-shown:translate-y-0
-          peer-focus:scale-75
-          peer-focus:-translate-y-4
-        `}
+          origin-left
+          pointer-events-none
+        "
       >
         {label}
       </label>
+      <input
+        id={id}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        placeholder={placeholder ? placeholder : ''}
+        type={type}
+        className="
+         mt-1
+          w-full
+          p-2
+          border
+          rounded
+          focus:outline-none
+          focus:border-blue-500
+        "
+      />
     </div>
   );
 };

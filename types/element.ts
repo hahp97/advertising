@@ -1,5 +1,5 @@
 export interface Element {
-  type: string;
+  type: 'text' | 'button';
   id: number;
   props: PropsElement;
 }

@@ -1,6 +1,6 @@
 import { RefObject, useEffect, useState } from 'react';
 
-interface MouseProps {
+export interface MouseProps {
   x: number | null;
   y: number | null;
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import Button from '@/components/button';
+import ConfigForm from '@/components/configForm';
+import DisplayInfo from '@/components/displayInfo';
 import Label from '@/components/paragraph';
 import { initialPosition } from '@/constants/initialData';
 import useMouseXY from '@/hooks/useMouseXY';
@@ -11,6 +13,7 @@ import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from '
 const AdminPage = () => {
   const [elements, setElements] = useState<Element[]>([]);
   const [history, setHistory] = useState<Element[]>([]);
+  const [config, setConfig] = useState<boolean>(false);
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
 
@@ -27,7 +30,7 @@ const AdminPage = () => {
   };
 
   const handleOnDrop = (e: DragEvent) => {
-    const elementType = (e.dataTransfer as DataTransfer).getData('elementType') as string;
+    const elementType = (e.dataTransfer as DataTransfer).getData('elementType') as 'text' | 'button';
     const newElement: Element = { type: elementType, id: new Date().getTime(), props: { text: '' } };
 
     setElements([...elements, newElement]);
@@ -90,6 +93,23 @@ const AdminPage = () => {
   };
 
   const handleView = () => {
+    const data = localStorage.getItem('data');
+
+    if (!data) {
+      return;
+    }
+
+    const dataView = JSON.parse(data);
+    const isElementChanged = JSON.stringify(dataView) !== JSON.stringify(elements);
+
+    if (isElementChanged) {
+      const shouldSave = window.confirm('Have a new change, do you want to save before view?');
+      if (shouldSave) {
+        handleSave();
+        return;
+      }
+    }
+
     window.open('/consumer', '_blank');
   };
 
@@ -204,12 +224,10 @@ const AdminPage = () => {
     console.log('history', history);
   }, [history]);
 
-  const formContent = <form>{/* Thêm các trường và logic của form của bạn ở đây */}</form>;
-
   return (
     <div>
       <div className="flex h-[100vh]">
-        <div className="w-1/4">
+        <div className="w-1/4 flex flex-col">
           <div className="bg-gray-200 p-4 rounded-md space-y-4">
             <div
               className="bg-gray-300 p-3 rounded-md cursor-move relative"
@@ -232,6 +250,13 @@ const AdminPage = () => {
               </div>
             </div>
           </div>
+          <div className="bottom-0 flex-end">
+            <DisplayInfo
+              mouseXY={mouseXY}
+              mousePosition={mousePosition}
+              elements={elements}
+            />
+          </div>
         </div>
         <div
           ref={myElementRef as RefObject<HTMLDivElement>}
@@ -243,10 +268,12 @@ const AdminPage = () => {
           <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
+              disabled={elements.length === 0}
               onClick={handleSave}
             />
             <Button
               label="View"
+              disabled={localStorage.getItem('data') === null}
               onClick={handleView}
             />
             <Button
@@ -292,9 +319,10 @@ const AdminPage = () => {
                       className={'bg-gray-200 p-2 rounded-md hover:bg-gray-300 mb-2'}
                       onClick={() => {
                         setSelectedElement(element);
+                        setConfig(true);
                       }}
                     >
-                      {element.id} + {element.type}
+                      {element.props.text || 'Button'}
                     </button>
                   )}
                 </li>
@@ -303,13 +331,30 @@ const AdminPage = () => {
           </section>
         </div>
         <div className="w-1/4">
-          <div>
-            <p>Mouse Position:</p>
-            <p>X: {mouseXY.x}</p>
-            <p>Y: {mouseXY.y}</p>
-            <p>Dragging: {mousePosition.dragging}</p>
-            <p>Instances: {elements.length}</p>
-          </div>
+          {config && (
+            <ConfigForm
+              onSave={(data) => {
+                setConfig(false);
+                setElements((prev) => {
+                  const newElements = prev.map((element) => {
+                    if (element.id === selectedElement?.id) {
+                      element.props.text = data.titleElement;
+                      element.props.alert = data.alertMessageBtn;
+                    }
+                    return element;
+                  });
+                  return newElements;
+                });
+              }}
+              inputTitle="Input Button"
+              initialData={{
+                titleElement: selectedElement?.props.text || '',
+                alertMessageBtn: selectedElement?.props.alert || '',
+              }}
+              type={selectedElement?.type as 'text' | 'button'}
+            />
+          )}
+
           {/* <div>
             {selectedElement?.type === 'button' && (
               <Input
