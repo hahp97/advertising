@@ -1,3 +1,5 @@
+'use client';
+
 import { MouseProps } from '@/hooks/useMouseXY';
 import { Element } from '@/types/element';
 
