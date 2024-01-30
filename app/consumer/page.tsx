@@ -1,15 +1,17 @@
 'use client';
 
 import { Element } from '@/types/element';
+import { useEffect, useState } from 'react';
 
 const Consumer = () => {
-  const data = localStorage.getItem('data');
+  const [dataView, setDataView] = useState<Element[]>([]);
 
-  if (!data) {
-    return <div>No data</div>;
-  }
-
-  const dataView = JSON.parse(data);
+  useEffect(() => {
+    const data = localStorage.getItem('data');
+    if (data) {
+      setDataView(JSON.parse(data));
+    }
+  }, []);
 
   return (
     <div>

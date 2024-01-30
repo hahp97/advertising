@@ -11,7 +11,6 @@ import { ElementPosition } from '@/types/elementPosition';
 import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
 
 const AdminPage = () => {
-  const data = localStorage.getItem('data');
   const [elements, setElements] = useState<Element[]>([]);
   const [history, setHistory] = useState<Element[]>([]);
   const [config, setConfig] = useState<boolean>(false);
@@ -115,6 +114,7 @@ const AdminPage = () => {
   };
 
   const handleExport = () => {
+    const data = window?.localStorage.getItem('data');
     if (!data) {
       return;
     }
@@ -273,7 +273,7 @@ const AdminPage = () => {
             />
             <Button
               label="View"
-              disabled={data === null}
+              disabled={window?.localStorage.getItem('data') === null}
               onClick={handleView}
             />
             <Button
