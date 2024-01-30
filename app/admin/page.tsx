@@ -1,7 +1,6 @@
 'use client';
 
 import Button from '@/components/button';
-import Input from '@/components/input';
 import Label from '@/components/paragraph';
 import { initialPosition } from '@/constants/initialData';
 import useMouseXY from '@/hooks/useMouseXY';
@@ -205,34 +204,43 @@ const AdminPage = () => {
     console.log('history', history);
   }, [history]);
 
+  const formContent = <form>{/* Thêm các trường và logic của form của bạn ở đây */}</form>;
+
   return (
     <div>
       <div className="flex h-[100vh]">
         <div className="w-1/4">
-          <div className="bg-gray-200 p-2 rounded-md">
+          <div className="bg-gray-200 p-4 rounded-md space-y-4">
             <div
-              className="bg-gray-300 p-2 rounded-md"
-              draggable
+              className="bg-gray-300 p-3 rounded-md cursor-move relative"
+              draggable="true"
               onDragStart={(e) => handleOnDrag(e, 'text')}
             >
-              Text
+              <p className="text-gray-800">Text</p>
+              <div className="absolute bottom-0 right-0 p-1 bg-gray-500 text-white text-xs rounded-bl-md">
+                Drag me to add Paragraph
+              </div>
             </div>
             <div
-              className="bg-gray-300 p-2 rounded-md"
-              draggable
+              className="bg-gray-300 p-3 rounded-md cursor-move relative"
+              draggable="true"
               onDragStart={(e) => handleOnDrag(e, 'button')}
             >
-              button
+              <p className="text-gray-800">Button</p>
+              <div className="absolute bottom-0 right-0 p-1 bg-gray-500 text-white text-xs rounded-bl-md">
+                Drag me to add a button
+              </div>
             </div>
           </div>
         </div>
         <div
           ref={myElementRef as RefObject<HTMLDivElement>}
-          className="w-2/4 bg-gray-100 p-2 rounded-md flex justify-center "
+          className="flex flex-col w-2/4 bg-gray-100 p-2 rounded-md"
           onDrop={handleOnDrop}
           onDragOver={handleOnDragOver}
+          id="drop-area"
         >
-          <div className="flex items-center justify-center space-x-3 max-w-xl max-h-20 rounded-lg px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
+          <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
               onClick={handleSave}
@@ -253,29 +261,35 @@ const AdminPage = () => {
               label="Undo"
               onClick={handleUndo}
             />
+            <Button
+              label="Redo"
+              onClick={handleUndo}
+            />
           </div>
 
           <section>
-            <ul>
+            <ul className="flex flex-col my-10 items-center">
               {elements.map((element, index) => (
                 <li
                   key={index}
                   data-position={index}
                   draggable
-                  //   onDragStart={onDragStart}
-                  //   onDragOver={onDragOver}
-                  //   onDrop={onDrop}
-                  //   onDragLeave={onDragLeave}
-                  className={'bg-gray-300 p-2 rounded-md'}
+                  onDragStart={onDragStart}
+                  onDragOver={onDragOver}
+                  onDrop={onDrop}
+                  onDragLeave={onDragLeave}
                 >
                   {element.type === 'text' && (
-                    <Label
-                      initialContent="Paragraph"
-                      onChange={(e) => handleConfigElement(element, e)}
-                    />
+                    <div className={'p-2 rounded-md hover:bg-gray-300 mb-2'}>
+                      <Label
+                        initialContent="Paragraph"
+                        onChange={(e) => handleConfigElement(element, e)}
+                      />
+                    </div>
                   )}
                   {element.type === 'button' && (
                     <button
+                      className={'bg-gray-200 p-2 rounded-md hover:bg-gray-300 mb-2'}
                       onClick={() => {
                         setSelectedElement(element);
                       }}
@@ -296,7 +310,7 @@ const AdminPage = () => {
             <p>Dragging: {mousePosition.dragging}</p>
             <p>Instances: {elements.length}</p>
           </div>
-          <div>
+          {/* <div>
             {selectedElement?.type === 'button' && (
               <Input
                 id="button"
@@ -324,7 +338,7 @@ const AdminPage = () => {
                 }}
               />
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

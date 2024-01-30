@@ -31,15 +31,15 @@ const Label = ({ initialContent, onChange }: LabelProps) => {
           onChange={handleChange}
           onBlur={handleSave}
           autoFocus
-          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500 w-full"
         />
       ) : (
-        <span
+        <text
           onClick={handleEdit}
-          className="cursor-pointer p-2 hover:bg-indigo-50"
+          className="cursor-pointer p-2 w-full "
         >
           {content}
-        </span>
+        </text>
       )}
     </div>
   );
