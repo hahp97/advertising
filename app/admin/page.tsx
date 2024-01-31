@@ -9,13 +9,14 @@ import useLocalStorage from '@/hooks/useLocalStorage';
 import useMouseXY from '@/hooks/useMouseXY';
 import useToast from '@/hooks/useToast';
 import { Element } from '@/types/element';
-import { ChangeEvent, DragEvent, RefObject, useCallback, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, RefObject, useRef, useState } from 'react';
 
 const AdminPage = () => {
   const [valueElement, setValueElement] = useLocalStorage('data', []);
 
   const [elements, setElements] = useState<Element[]>(valueElement || []);
   const [config, setConfig] = useState<boolean>(false);
+  const [onSave, setOnSave] = useState<boolean>(false);
 
   const [storeUndo, setStoreUndo] = useState<Element[]>([]);
   const [storeRedo, setStoreRedo] = useState<Element[]>([]);
@@ -60,6 +61,7 @@ const AdminPage = () => {
 
     setStoreRedo([]);
     setStoreUndo([]);
+    setOnSave(false);
   };
 
   const handleView = () => {
@@ -205,19 +207,17 @@ const AdminPage = () => {
         return item;
       });
 
-      setValueElement(newElements);
+      setOnSave(true);
 
       return newElements;
     });
   };
 
-  const isElementChange = useCallback(
-    (elements: Element[], valueElement: Element[]) => {
-      const isElementChanged = JSON.stringify(valueElement) !== JSON.stringify(elements);
-      return isElementChanged;
-    },
-    [elements],
-  );
+  const isElementChange = (elements: Element[], valueElement: Element[]) => {
+    const isElementChanged = JSON.stringify(valueElement) !== JSON.stringify(elements);
+
+    return isElementChanged;
+  };
 
   return (
     <div>
@@ -264,7 +264,7 @@ const AdminPage = () => {
           <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
-              disabled={!isElementChange(elements, valueElement) || elements.length === 0}
+              disabled={(!isElementChange(elements, valueElement) && !onSave) || elements.length === 0}
               onClick={handleSave}
             />
             <Button
@@ -357,7 +357,7 @@ const AdminPage = () => {
                     return element;
                   });
 
-                  setValueElement(newElements);
+                  setOnSave(true);
 
                   return newElements;
                 });
