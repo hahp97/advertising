@@ -4,9 +4,11 @@ import Button from '@/components/button';
 import ConfigForm from '@/components/configForm';
 import DisplayInfo from '@/components/displayInfo';
 import Label from '@/components/paragraph';
+import ToastMessage from '@/components/toast';
 import { initialPosition } from '@/constants/initialData';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import useMouseXY from '@/hooks/useMouseXY';
+import useToast from '@/hooks/useToast';
 import { Element } from '@/types/element';
 import { ElementPosition } from '@/types/elementPosition';
 import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
@@ -29,6 +31,8 @@ const AdminPage = () => {
   const myElementRef = useRef<HTMLElement>(null);
   const mouseXY = useMouseXY(myElementRef);
 
+  const { showToast, toastProps } = useToast();
+
   const handleOnDrag = (e: DragEvent, elementType: string) => {
     (e.dataTransfer as DataTransfer).setData('elementType', elementType);
     setMousePosition({ ...mousePosition, dragging: elementType });
@@ -41,6 +45,8 @@ const AdminPage = () => {
 
     setElements([...elements, newElement]);
     setStoreUndo([...storeUndo, newElement]);
+
+    setStoreRedo([]);
   };
 
   const handleOnDragOver = (e: DragEvent) => {
@@ -96,6 +102,11 @@ const AdminPage = () => {
 
   const handleSave = () => {
     setValueElement(elements);
+
+    showToast('Save successfully');
+
+    setStoreRedo([]);
+    setStoreUndo([]);
   };
 
   const handleView = () => {
@@ -246,19 +257,19 @@ const AdminPage = () => {
   };
 
   const checkElementChange = (elements: Element[], valueElement: Element[]) => {
-    const isElementChanged = JSON.stringify(valueElement) !== JSON.stringify(elements);
+    const isElementChanged = JSON.stringify(valueElement) === JSON.stringify(elements);
 
     return isElementChanged;
   };
 
   useEffect(() => {
-    console.log('undo', storeUndo);
+    console.log('undo', elements);
   }, [storeUndo, elements]);
 
   return (
     <div>
       <div className="flex h-[100vh]">
-        <div className="w-1/4 flex flex-col">
+        <div className="w-1/4 flex flex-col justify-between">
           <div className="bg-gray-200 p-4 rounded-md space-y-4">
             <div
               className="bg-gray-300 p-3 rounded-md cursor-move relative"
@@ -281,7 +292,7 @@ const AdminPage = () => {
               </div>
             </div>
           </div>
-          <div className="bottom-0 flex-end">
+          <div>
             <DisplayInfo
               selectElement={selectedElement as Element}
               mouseXY={mouseXY}
@@ -300,17 +311,17 @@ const AdminPage = () => {
           <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
-              disabled={!checkElementChange(elements, valueElement)}
+              disabled={checkElementChange(elements, valueElement)}
               onClick={handleSave}
             />
             <Button
               label="View"
-              disabled={valueElement.length === 0}
+              disabled={valueElement?.length === 0}
               onClick={handleView}
             />
             <Button
               label="Export"
-              disabled={valueElement.length === 0}
+              disabled={valueElement?.length === 0}
               onClick={handleExport}
             />
             <Button
@@ -413,6 +424,7 @@ const AdminPage = () => {
           )}
         </div>
       </div>
+      <ToastMessage {...toastProps} />
     </div>
   );
 };

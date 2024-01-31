@@ -4,9 +4,10 @@ import { useState } from 'react';
 const useLocalStorage = (key: string, initialValue: Element[]) => {
   const [state, setState] = useState(() => {
     try {
-      const value = window.localStorage.getItem(key);
-
-      return value ? JSON.parse(value) : initialValue;
+      if (typeof window !== 'undefined') {
+        const value = window.localStorage.getItem(key);
+        return value ? JSON.parse(value) : initialValue;
+      }
     } catch (error) {
       console.log(error);
     }
