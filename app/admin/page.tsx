@@ -20,8 +20,6 @@ const AdminPage = () => {
   const [storeUndo, setStoreUndo] = useState<Element[]>([]);
   const [storeRedo, setStoreRedo] = useState<Element[]>([]);
 
-  const [canSave, setCanSave] = useState<boolean>(false);
-
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
 
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
@@ -62,7 +60,6 @@ const AdminPage = () => {
 
     setStoreRedo([]);
     setStoreUndo([]);
-    setCanSave(false);
   };
 
   const handleView = () => {
@@ -212,8 +209,6 @@ const AdminPage = () => {
 
       return newElements;
     });
-
-    setCanSave(true);
   };
 
   const isElementChange = useCallback(
