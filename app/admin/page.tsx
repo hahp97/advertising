@@ -9,14 +9,16 @@ import useLocalStorage from '@/hooks/useLocalStorage';
 import useMouseXY from '@/hooks/useMouseXY';
 import { Element } from '@/types/element';
 import { ElementPosition } from '@/types/elementPosition';
-import { ChangeEvent, DragEvent, RefObject, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
 
 const AdminPage = () => {
   const [valueElement, setValueElement] = useLocalStorage('data', []);
 
   const [elements, setElements] = useState<Element[]>(valueElement || []);
-  const [history, setHistory] = useState<Element[]>([]);
   const [config, setConfig] = useState<boolean>(false);
+
+  const [storeUndo, setStoreUndo] = useState<Element[]>([]);
+  const [storeRedo, setStoreRedo] = useState<Element[]>([]);
 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
 
@@ -34,10 +36,11 @@ const AdminPage = () => {
 
   const handleOnDrop = (e: DragEvent) => {
     const elementType = (e.dataTransfer as DataTransfer).getData('elementType') as 'text' | 'button';
-    const newElement: Element = { type: elementType, id: new Date().getTime(), props: { text: '' } };
+
+    const newElement: Element = { type: elementType, id: new Date().getTime(), props: { text: `${elementType}` } };
 
     setElements([...elements, newElement]);
-    setHistory([...history, newElement]);
+    setStoreUndo([...storeUndo, newElement]);
   };
 
   const handleOnDragOver = (e: DragEvent) => {
@@ -203,21 +206,41 @@ const AdminPage = () => {
   };
 
   const handleUndo = () => {
-    setHistory(history.slice(0, history.length - 1));
+    if (storeUndo.length > 0) {
+      const lastElement = storeUndo[storeUndo.length - 1];
+      setStoreUndo(storeUndo.slice(0, storeUndo.length - 1));
+      if (elements.length > 0) {
+        const poppedElement = elements.pop();
+        if (poppedElement) {
+          setElements(poppedElement ? [...elements] : [...elements, lastElement]);
+        }
+      }
+      setStoreRedo([...storeRedo, lastElement]);
+    }
+  };
 
-    setElements(history.slice(0, history.length - 1));
+  const handleRedo = () => {
+    if (storeRedo.length > 0) {
+      const lastElement = storeRedo[storeRedo.length - 1];
+      setStoreRedo(storeRedo.slice(0, storeRedo.length - 1));
+      setElements([...elements, lastElement]);
+      setStoreUndo([...storeUndo, lastElement]);
+    }
   };
 
   const handleConfigElement = (element: Element, e: ChangeEvent<HTMLInputElement>) => {
     setSelectedElement(element);
     const value = e.target.value;
+
     setElements((prev) => {
       const newElements = prev.map((item) => {
         if (item.id === element.id) {
-          item.props.text = value;
+          item.props.text = value.length > 0 ? value : 'Paragraph';
         }
+
         return item;
       });
+
       return newElements;
     });
   };
@@ -227,6 +250,10 @@ const AdminPage = () => {
 
     return isElementChanged;
   };
+
+  useEffect(() => {
+    console.log('undo', storeUndo);
+  }, [storeUndo, elements]);
 
   return (
     <div>
@@ -256,6 +283,7 @@ const AdminPage = () => {
           </div>
           <div className="bottom-0 flex-end">
             <DisplayInfo
+              selectElement={selectedElement as Element}
               mouseXY={mouseXY}
               mousePosition={mousePosition}
               elements={elements}
@@ -282,6 +310,7 @@ const AdminPage = () => {
             />
             <Button
               label="Export"
+              disabled={valueElement.length === 0}
               onClick={handleExport}
             />
             <Button
@@ -290,11 +319,13 @@ const AdminPage = () => {
             />
             <Button
               label="Undo"
+              disabled={storeUndo.length === 0}
               onClick={handleUndo}
             />
             <Button
               label="Redo"
-              onClick={handleUndo}
+              disabled={storeRedo.length === 0}
+              onClick={handleRedo}
             />
           </div>
 
@@ -305,15 +336,19 @@ const AdminPage = () => {
                   key={index}
                   data-position={index}
                   draggable
-                  onDragStart={onDragStart}
-                  onDragOver={onDragOver}
-                  onDrop={onDrop}
-                  onDragLeave={onDragLeave}
+                  // onDragStart={onDragStart}
+                  // onDragOver={onDragOver}
+                  // onDrop={onDrop}
+                  // onDragLeave={onDragLeave}
                 >
                   {element.type === 'text' && (
                     <div
                       className={'p-2 rounded-md hover:bg-gray-300 mb-2'}
-                      onClick={() => setConfig(false)}
+                      onClick={() => {
+                        setConfig(false);
+                        setSelectedElement(element);
+                      }}
+                      onBlur={() => setSelectedElement(null)}
                     >
                       <Label
                         initialContent="Paragraph"
@@ -338,6 +373,16 @@ const AdminPage = () => {
           </section>
         </div>
         <div className="w-1/4">
+          {selectedElement?.type === 'text' && (
+            <div className="p-4 border rounded-md shadow-md">
+              <p>This is a paraphrase content. You can customize and add your own meaningful.</p>
+            </div>
+          )}
+          {selectedElement?.type === 'button' && (
+            <div className="p-4 border rounded-md shadow-md mb-5">
+              <text className="text-blue-500 cursor-pointer underline">Configure button:</text>
+            </div>
+          )}
           {config && (
             <ConfigForm
               selectedElement={selectedElement as Element}
@@ -349,10 +394,14 @@ const AdminPage = () => {
                       element.props.text = data.titleElement;
                       element.props.alert = data.alertMessageBtn;
                     }
+
+                    setStoreUndo([...storeUndo, element]);
                     return element;
                   });
+
                   return newElements;
                 });
+                setSelectedElement(null);
               }}
               inputTitle="Input Button"
               initialData={{
