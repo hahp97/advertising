@@ -5,13 +5,16 @@ import ConfigForm from '@/components/configForm';
 import DisplayInfo from '@/components/displayInfo';
 import Label from '@/components/paragraph';
 import { initialPosition } from '@/constants/initialData';
+import useLocalStorage from '@/hooks/useLocalStorage';
 import useMouseXY from '@/hooks/useMouseXY';
 import { Element } from '@/types/element';
 import { ElementPosition } from '@/types/elementPosition';
-import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, RefObject, useRef, useState } from 'react';
 
 const AdminPage = () => {
-  const [elements, setElements] = useState<Element[]>([]);
+  const [valueElement, setValueElement] = useLocalStorage('data', []);
+
+  const [elements, setElements] = useState<Element[]>(valueElement || []);
   const [history, setHistory] = useState<Element[]>([]);
   const [config, setConfig] = useState<boolean>(false);
 
@@ -89,21 +92,22 @@ const AdminPage = () => {
   };
 
   const handleSave = () => {
-    localStorage.setItem('data', JSON.stringify(elements));
+    setValueElement(elements);
   };
 
   const handleView = () => {
-    const data = localStorage.getItem('data');
+    const dataView = valueElement;
 
-    if (!data) {
+    if (!dataView) {
       return;
     }
 
-    const dataView = JSON.parse(data);
     const isElementChanged = JSON.stringify(dataView) !== JSON.stringify(elements);
 
     if (isElementChanged) {
-      const shouldSave = window.confirm('Have a new change, do you want to save before view?');
+      const shouldSave = window.confirm(
+        'Have a new change, do you want to save before view? By click OK to save, Cancel to view',
+      );
       if (shouldSave) {
         handleSave();
         return;
@@ -114,12 +118,10 @@ const AdminPage = () => {
   };
 
   const handleExport = () => {
-    const data = window?.localStorage.getItem('data');
-    if (!data) {
+    const dataView = valueElement;
+    if (!dataView) {
       return;
     }
-
-    const dataView = JSON.parse(data);
 
     const dataExport = dataView.map((element: Element) => {
       if (element.type === 'text') {
@@ -220,9 +222,11 @@ const AdminPage = () => {
     });
   };
 
-  useEffect(() => {
-    console.log('history', history);
-  }, [history]);
+  const checkElementChange = (elements: Element[], valueElement: Element[]) => {
+    const isElementChanged = JSON.stringify(valueElement) !== JSON.stringify(elements);
+
+    return isElementChanged;
+  };
 
   return (
     <div>
@@ -268,12 +272,12 @@ const AdminPage = () => {
           <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
-              disabled={elements.length === 0}
+              disabled={!checkElementChange(elements, valueElement)}
               onClick={handleSave}
             />
             <Button
               label="View"
-              disabled={window?.localStorage.getItem('data') === null}
+              disabled={valueElement.length === 0}
               onClick={handleView}
             />
             <Button
@@ -307,7 +311,10 @@ const AdminPage = () => {
                   onDragLeave={onDragLeave}
                 >
                   {element.type === 'text' && (
-                    <div className={'p-2 rounded-md hover:bg-gray-300 mb-2'}>
+                    <div
+                      className={'p-2 rounded-md hover:bg-gray-300 mb-2'}
+                      onClick={() => setConfig(false)}
+                    >
                       <Label
                         initialContent="Paragraph"
                         onChange={(e) => handleConfigElement(element, e)}
@@ -333,6 +340,7 @@ const AdminPage = () => {
         <div className="w-1/4">
           {config && (
             <ConfigForm
+              selectedElement={selectedElement as Element}
               onSave={(data) => {
                 setConfig(false);
                 setElements((prev) => {
@@ -354,36 +362,6 @@ const AdminPage = () => {
               type={selectedElement?.type as 'text' | 'button'}
             />
           )}
-
-          {/* <div>
-            {selectedElement?.type === 'button' && (
-              <Input
-                id="button"
-                label="Add your message"
-                type="text"
-                placeholder="Text"
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  setHistory((prev) => [
-                    ...prev,
-                    { ...selectedElement, props: { ...selectedElement.props, alert: value } },
-                  ]);
-                }}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setElements((prev) => {
-                    const newElements = prev.map((element) => {
-                      if (element.id === selectedElement.id) {
-                        element.props.alert = value;
-                      }
-                      return element;
-                    });
-                    return newElements;
-                  });
-                }}
-              />
-            )}
-          </div> */}
         </div>
       </div>
     </div>

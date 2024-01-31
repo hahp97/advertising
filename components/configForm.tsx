@@ -1,7 +1,8 @@
 'use client';
 
 import Input from '@/components/input';
-import { useState } from 'react';
+import { Element } from '@/types/element';
+import { useEffect, useState } from 'react';
 
 interface ConfigFormProps {
   onSave: (data: { titleElement: string; alertMessageBtn: string | undefined }) => void;
@@ -9,6 +10,7 @@ interface ConfigFormProps {
   initialData?: { titleElement: string; alertMessageBtn: string };
   type: 'text' | 'button';
   alertMessage?: string;
+  selectedElement: Element;
 }
 
 type RequireAlertMessage<T> = T extends { type: 'button' } ? { alertMessage: string } : {};
@@ -20,6 +22,7 @@ const ConfigForm = ({
   inputTitle,
   initialData = { titleElement: '', alertMessageBtn: '' },
   type,
+  selectedElement,
 }: FinalConfigFormProps) => {
   const [title, setTitle] = useState(initialData.titleElement);
   const [alertMessage, setAlertMessage] = useState(initialData.alertMessageBtn);
@@ -31,21 +34,17 @@ const ConfigForm = ({
     });
   };
 
+  useEffect(() => {
+    setTitle(initialData.titleElement);
+    setAlertMessage(initialData.alertMessageBtn);
+  }, [selectedElement]);
+
+  console.log(selectedElement);
+
   return (
-    <div className="p-4 border border-gray-300 rounded shadow">
-      {type === 'text' ? (
-        <div className="mb-4">
-          <Input
-            label={inputTitle}
-            type="text"
-            id="title"
-            placeholder="Enter value for Input"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-      ) : (
-        <>
+    <>
+      {type === 'button' && (
+        <div className="p-4 border border-gray-300 rounded shadow">
           <div className="mb-4">
             <Input
               label={inputTitle}
@@ -66,15 +65,15 @@ const ConfigForm = ({
               onChange={(e) => setAlertMessage(e.target.value)}
             />
           </div>
-        </>
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={handleSave}
+          >
+            Save
+          </button>
+        </div>
       )}
-      <button
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        onClick={handleSave}
-      >
-        Save
-      </button>
-    </div>
+    </>
   );
 };
 
