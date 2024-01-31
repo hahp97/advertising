@@ -13,17 +13,13 @@ interface ConfigFormProps {
   selectedElement: Element;
 }
 
-type RequireAlertMessage<T> = T extends { type: 'button' } ? { alertMessage: string } : {};
-
-type FinalConfigFormProps = ConfigFormProps & RequireAlertMessage<ConfigFormProps>;
-
 const ConfigForm = ({
   onSave,
   inputTitle,
   initialData = { titleElement: '', alertMessageBtn: '' },
   type,
   selectedElement,
-}: FinalConfigFormProps) => {
+}: ConfigFormProps) => {
   const [title, setTitle] = useState(initialData.titleElement);
   const [alertMessage, setAlertMessage] = useState(initialData.alertMessageBtn);
 

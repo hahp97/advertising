@@ -5,13 +5,11 @@ import ConfigForm from '@/components/configForm';
 import DisplayInfo from '@/components/displayInfo';
 import Label from '@/components/paragraph';
 import ToastMessage from '@/components/toast';
-import { initialPosition } from '@/constants/initialData';
 import useLocalStorage from '@/hooks/useLocalStorage';
 import useMouseXY from '@/hooks/useMouseXY';
 import useToast from '@/hooks/useToast';
 import { Element } from '@/types/element';
-import { ElementPosition } from '@/types/elementPosition';
-import { ChangeEvent, DragEvent, RefObject, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, DragEvent, RefObject, useCallback, useRef, useState } from 'react';
 
 const AdminPage = () => {
   const [valueElement, setValueElement] = useLocalStorage('data', []);
@@ -22,9 +20,9 @@ const AdminPage = () => {
   const [storeUndo, setStoreUndo] = useState<Element[]>([]);
   const [storeRedo, setStoreRedo] = useState<Element[]>([]);
 
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
+  const [canSave, setCanSave] = useState<boolean>(false);
 
-  const [dragAndDrop, setDragAndDrop] = useState<ElementPosition>(initialPosition);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, dragging: '' });
 
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
 
@@ -41,7 +39,11 @@ const AdminPage = () => {
   const handleOnDrop = (e: DragEvent) => {
     const elementType = (e.dataTransfer as DataTransfer).getData('elementType') as 'text' | 'button';
 
-    const newElement: Element = { type: elementType, id: new Date().getTime(), props: { text: `${elementType}` } };
+    const newElement: Element = {
+      type: elementType,
+      id: new Date().getTime(),
+      props: { text: `${elementType === 'text' ? 'Paragraph' : 'Button'}` },
+    };
 
     setElements([...elements, newElement]);
     setStoreUndo([...storeUndo, newElement]);
@@ -53,53 +55,6 @@ const AdminPage = () => {
     e.preventDefault();
   };
 
-  const onDragStart = (e: DragEvent) => {
-    const currentPosition = Number((e.currentTarget as HTMLElement).dataset.position);
-    setDragAndDrop({ ...dragAndDrop, draggedFrom: currentPosition, isDragging: true, originalOrder: elements });
-
-    // using for firefox
-    e.dataTransfer.setData('text/html', '');
-  };
-
-  const onDragOver = (e: DragEvent) => {
-    e.preventDefault();
-
-    let newList = dragAndDrop.originalOrder;
-
-    const draggedFrom = dragAndDrop.draggedFrom;
-
-    const draggedTo = Number((e.currentTarget as HTMLElement).dataset.position);
-
-    if (draggedFrom !== draggedTo) {
-      const itemDragged = newList && newList[draggedFrom!];
-      const remainingItems = newList.filter((_, index) => index !== draggedFrom);
-
-      newList = [...remainingItems.slice(0, draggedTo), itemDragged, ...remainingItems.slice(draggedTo)];
-
-      if (draggedTo !== dragAndDrop.draggedTo) {
-        setDragAndDrop({
-          ...dragAndDrop,
-          updatedOrder: newList,
-          draggedTo: draggedTo,
-        });
-      }
-    }
-  };
-
-  const onDrop = (e: DragEvent) => {
-    if (dragAndDrop.draggedFrom !== null && dragAndDrop.draggedTo !== null) {
-      setElements(dragAndDrop.updatedOrder);
-    }
-    setDragAndDrop({ ...dragAndDrop, draggedFrom: null, draggedTo: null, isDragging: false });
-  };
-
-  const onDragLeave = () => {
-    setDragAndDrop({
-      ...dragAndDrop,
-      draggedTo: null,
-    });
-  };
-
   const handleSave = () => {
     setValueElement(elements);
 
@@ -107,6 +62,7 @@ const AdminPage = () => {
 
     setStoreRedo([]);
     setStoreUndo([]);
+    setCanSave(false);
   };
 
   const handleView = () => {
@@ -252,19 +208,21 @@ const AdminPage = () => {
         return item;
       });
 
+      setValueElement(newElements);
+
       return newElements;
     });
+
+    setCanSave(true);
   };
 
-  const checkElementChange = (elements: Element[], valueElement: Element[]) => {
-    const isElementChanged = JSON.stringify(valueElement) === JSON.stringify(elements);
-
-    return isElementChanged;
-  };
-
-  useEffect(() => {
-    console.log('undo', elements);
-  }, [storeUndo, elements]);
+  const isElementChange = useCallback(
+    (elements: Element[], valueElement: Element[]) => {
+      const isElementChanged = JSON.stringify(valueElement) !== JSON.stringify(elements);
+      return isElementChanged;
+    },
+    [elements],
+  );
 
   return (
     <div>
@@ -311,17 +269,17 @@ const AdminPage = () => {
           <div className="flex items-center justify-center space-x-3 py-4 rounded-lg mx-auto px-6 bg-white ring-1 ring-slate-900/5 shadow-lg">
             <Button
               label="Save"
-              disabled={checkElementChange(elements, valueElement)}
+              disabled={!isElementChange(elements, valueElement) || elements.length === 0}
               onClick={handleSave}
             />
             <Button
               label="View"
-              disabled={valueElement?.length === 0}
+              disabled={valueElement?.length === 0 || elements.length === 0}
               onClick={handleView}
             />
             <Button
               label="Export"
-              disabled={valueElement?.length === 0}
+              disabled={valueElement?.length === 0 || elements.length === 0}
               onClick={handleExport}
             />
             <Button
@@ -346,11 +304,6 @@ const AdminPage = () => {
                 <li
                   key={index}
                   data-position={index}
-                  draggable
-                  // onDragStart={onDragStart}
-                  // onDragOver={onDragOver}
-                  // onDrop={onDrop}
-                  // onDragLeave={onDragLeave}
                 >
                   {element.type === 'text' && (
                     <div
@@ -362,7 +315,7 @@ const AdminPage = () => {
                       onBlur={() => setSelectedElement(null)}
                     >
                       <Label
-                        initialContent="Paragraph"
+                        initialContent={element.props.text || 'Paragraph'}
                         onChange={(e) => handleConfigElement(element, e)}
                       />
                     </div>
@@ -406,9 +359,10 @@ const AdminPage = () => {
                       element.props.alert = data.alertMessageBtn;
                     }
 
-                    setStoreUndo([...storeUndo, element]);
                     return element;
                   });
+
+                  setValueElement(newElements);
 
                   return newElements;
                 });
