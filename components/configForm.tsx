@@ -39,8 +39,6 @@ const ConfigForm = ({
     setAlertMessage(initialData.alertMessageBtn);
   }, [selectedElement]);
 
-  console.log(selectedElement);
-
   return (
     <>
       {type === 'button' && (
